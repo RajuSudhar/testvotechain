@@ -1,19 +1,19 @@
 import mysql.connector
 from mysql.connector import Error
 
-
-def insert_fingerprint_data(fingerprint_image: bytes, termination_count: int, bifurcation_count: int) -> None:
+def insert_fingerprint_data(img_path: str, termination_count: int, bifurcation_count: int) -> None:
     try:
         # Connect to MySQL
         connection = mysql.connector.connect(
             host='localhost',
-            database='your_database_name',
-            user='your_username',
-            password='your_password'
+            database='testvotechain',
+            user='python',
+            password='Impython312'
         )
 
         if connection.is_connected():
             cursor = connection.cursor()
+            fingerprint_image = convert_image_to_binary(img_path)
             # SQL query to insert data
             insert_query = """
             INSERT INTO fingerprint_data (fingerprint_image, termination_count, bifurcation_count)
@@ -37,3 +37,11 @@ def insert_fingerprint_data(fingerprint_image: bytes, termination_count: int, bi
             cursor.close()
             connection.close()
             print("MySQL connection is closed")
+
+
+
+def convert_image_to_binary(file_path: str) -> bytes:
+    # Convert the image file to binary data.
+    with open(file_path, 'rb') as file:
+        binary_data = file.read()
+    return binary_data
