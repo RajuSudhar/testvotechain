@@ -1,28 +1,33 @@
+import os
 import mysql.connector
+from dotenv import load_dotenv
 from mysql.connector import Error
+from mysql.connector.abstracts import MySQLConnectionAbstract
+from mysql.connector.pooling import PooledMySQLConnection
 
-def connect_mydb():
+load_dotenv()
+
+DB_HOST = os.getenv('DB_HOST')
+DB_USER = os.getenv('DB_USER')
+DB_PASSWORD = os.getenv('DB_PASSWORD')
+DB_NAME = os.getenv('DB_NAME')
+
+def connect_mydb() -> PooledMySQLConnection | MySQLConnectionAbstract:
     connection = mysql.connector.connect(
-        host='localhost',
-        database='testvotechain',
-        user='python',
-        password='Impython312'
+        host=DB_HOST,
+        database=DB_NAME,
+        user=DB_USER,
+        password=DB_PASSWORD
     )
     return connection
 
-def insert_fingerprint_data(img_path: str, termination_count: int, bifurcation_count: int) -> None:
+def insert_fingerprint_data(fingerprint_binary: bytes, termination_count: int, bifurcation_count: int) -> None:
     try:
         # Connect to MySQL
-        connection = mysql.connector.connect(
-            host='localhost',
-            database='testvotechain',
-            user='python',
-            password='Impython312'
-        )
+        connection = connect_mydb()
 
         if connection.is_connected():
             cursor = connection.cursor()
-            fingerprint_image = convert_image_to_binary(img_path)
             # SQL query to insert data
             insert_query = """
             INSERT INTO fingerprint_data (fingerprint_image, termination_count, bifurcation_count)
@@ -30,7 +35,7 @@ def insert_fingerprint_data(img_path: str, termination_count: int, bifurcation_c
             """
 
             # Data tuple
-            data_tuple = (fingerprint_image, termination_count, bifurcation_count)
+            data_tuple = (fingerprint_binary, termination_count, bifurcation_count)
 
             # Execute the query and commit
             cursor.execute(insert_query, data_tuple)
@@ -47,10 +52,20 @@ def insert_fingerprint_data(img_path: str, termination_count: int, bifurcation_c
             connection.close()
             print("MySQL connection is closed")
 
+def fetch_fingerprint(fingerprint_id) -> bytes:
+    result = None
+    try:
+        connection = connect_mydb()
+        if connection.is_connected():
+            cursor = connection.cursor()
+            sql_query = '''SELECT fingerprint_image FROM fingerprint_data where id == %s'''
+            cursor.execute(sql_query, fingerprint_id)
+            result = cursor.fetchall()
+    except Error as e:
+        print(f"Error: {e}")
+    finally:
+        cursor.close()
+        connection.close()
 
+        return result
 
-def convert_image_to_binary(file_path: str) -> bytes:
-    # Convert the image file to binary data.
-    with open(file_path, 'rb') as file:
-        binary_data = file.read()
-    return binary_data

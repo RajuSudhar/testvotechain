@@ -1,19 +1,16 @@
 import cv2
-import numpy as np
-import mysql.connector
 import time
-from functions import extract_feature_val
-
-TERMINATION_THRESHOLD = 30
-BIFURCATION_THRESHOLD = 30 # Threshold +-30
-
+import database
+import functions
+from functions import extract_feature_val, fetch_and_compare_fingerprints, Fingerprint
 
 #img_path = "Real/300__F_Left_ring_finger.BMP"
 img_path = "Altered/Altered-HARD/300__F_Left_ring_finger_Obl.BMP"
 terminal_count,bi_count = extract_feature_val(img_path)
 print(terminal_count, bi_count)
 a = time.time()
-best_image = fetch_and_compare_fingerprints(img_path,terminal_count,bi_count)
+best_match = fetch_and_compare_fingerprints(img_path,terminal_count,bi_count)
+best_image = best_match.get_image()
 b = time.time()
 print(b - a)
 cv2.imshow("key", cv2.imread(img_path,None))
