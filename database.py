@@ -1,6 +1,15 @@
 import mysql.connector
 from mysql.connector import Error
 
+def connect_mydb():
+    connection = mysql.connector.connect(
+        host='localhost',
+        database='testvotechain',
+        user='python',
+        password='Impython312'
+    )
+    return connection
+
 def insert_fingerprint_data(img_path: str, termination_count: int, bifurcation_count: int) -> None:
     try:
         # Connect to MySQL

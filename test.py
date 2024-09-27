@@ -1,47 +1,55 @@
 import os
-import cv2
+import time
+import functions
+from database import convert_image_to_binary
+import mysql.connector
+from mysql.connector import Error
 
-sample = cv2.imread("Altered/Altered-Easy/1__M_Right_little_finger_Zcut.BMP")
+path = "Real/"
 
-best_score = 0
-image = None
-fileName = None
-kp1, kp2, mp = None, None, None
+try:
+    # Connect to MySQL
+    connection = mysql.connector.connect(
+        host='localqhost',
+        database='testvotechain',
+        user='python',
+        password='Impython312'
+    )
+
+    if connection.is_connected():
+        cursor = connection.cursor()
+
+        termination_count, bifurcation_count = functions.extract_feature_val(path + "")
+
+        fingerprint_image = convert_image_to_binary(path + "")
+
+        select_query = """
+                    SELECT * FROM fingerprint_data
+                    WHERE bifurcation_count BETWEEN ? AND ?
+                    AND termination_count BETWEEN ? AND ?;"""
+
+        # Data tuple
+        data_tuple = (fingerprint_image, termination_count, bifurcation_count)
+
+        # Execute the query and commit
+        cursor.execute(select_query, data_tuple)
+        connection.commit()
+
+except Error as e:
+    print(f"Error: {e}")
+
+finally:
+    if connection.is_connected():
+        cursor.close()
+        connection.close()
+        print("MySQL connection is closed")
 
 
-for file in [file for file in os.listdir("Real")]:
-    fingerprint_image = cv2.imread("Real/" + file)
-    sift = cv2.SIFT.create()
-
-    keypoints_1, descriptors_1 = sift.detectAndCompute(sample, None)
-    keypoints_2, descriptors_2 = sift.detectAndCompute(fingerprint_image, None)
-
-    matches = cv2.FlannBasedMatcher({'algorithm': 1, 'trees': 10},
-                                    {}).knnMatch(descriptors_1, descriptors_2, k=2)
-
-    match_point = []
-    for p, q in matches:
-        if p.distance < 0.1 * q.distance:
-            match_point.append(p)
-
-    keypoints = 0
-    if len(keypoints_1) < len(keypoints_2):
-        keypoints = len(keypoints_1)
-    else:
-        keypoints = len(keypoints_2)
-
-    if len(match_point) / keypoints * 100 > best_score:
-        best_score = len(match_point) / keypoints * 100
-        fileName = file
-        image = fingerprint_image
-        kp1, kp2, mp = keypoints_1, keypoints_2, match_point
+print(time.time())
 
 
-print("BEST MATCH : ", fileName)
-print("BEST SCORE : ", str(best_score))
-print(kp1)
 
-result = cv2.drawMatches(sample, kp1, image, kp2, mp, None)
-result = cv2.resize(result, fx=4, fy=4, dsize=None)
-cv2.imshow("Result", result)
-cv2.waitKey(0)
+# query for fetching from database
+# SELECT * FROM fingerprint_data
+# WHERE bifurcation_count BETWEEN ? AND ?
+# AND termination_count BETWEEN ? AND ?;
