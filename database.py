@@ -52,7 +52,7 @@ def insert_fingerprint_data(fingerprint_binary: bytes, termination_count: int, b
             connection.close()
             print("MySQL connection is closed")
 
-def fetch_fingerprint(fingerprint_id) -> bytes:
+def fetch_fingerprint(fingerprint_id):
     result = None
     try:
         connection = connect_mydb()
