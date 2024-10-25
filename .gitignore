@@ -54,6 +54,7 @@ coverage.xml
 cover/
 Real/
 Altered/
+.idea/
 git_history.txt
 
 # Translations
